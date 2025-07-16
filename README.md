@@ -4,8 +4,7 @@ Editor visual para o arquivo de hosts do Windows, com suporte a autosave e tema 
 
 ## 📥 Download da Última Release
 
-1. Acesse a página de Releases do projeto no GitHub:  
-   `https://github.com/lucas-daniel-sm/hosts_editor/releases`
+1. Acesse a página de [Releases](https://github.com/lucas-daniel-sm/hosts_editor/releases) do projeto no GitHub:  
 2. Baixe a versão mais recente (arquivo `.zip`).
 
 ## ▶️ Como Rodar
