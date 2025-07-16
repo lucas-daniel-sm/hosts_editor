@@ -5,14 +5,14 @@ Editor visual para o arquivo de hosts do Windows, com suporte a autosave e tema 
 ## 📥 Download da Última Release
 
 1. Acesse a página de Releases do projeto no GitHub:  
-   `https://github.com/<seu-usuario>/<seu-repo>/releases`
-2. Baixe a versão mais recente (arquivo `.zip` ou `.exe`).
+   `https://github.com/lucas-daniel-sm/hosts_editor/releases`
+2. Baixe a versão mais recente (arquivo `.zip`).
 
 ## ▶️ Como Rodar
 
 > ⚠️ **É obrigatório executar como administrador** para que o app consiga ler e escrever em `C:\Windows\System32\drivers\etc\hosts`.
 
-1. Extraia o `.zip` (se houver)  
+1. Extraia o `.zip`
 2. Clique com o botão direito no executável e escolha **“Executar como administrador”**  
 3. Aguarde a interface carregar
 
@@ -38,8 +38,8 @@ Editor visual para o arquivo de hosts do Windows, com suporte a autosave e tema 
 
 ```bash
 # Clone o repositório
-git clone https://github.com/<seu-usuario>/<seu-repo>.git
-cd <seu-repo>
+git clone https://github.com/lucas-daniel-sm/hosts_editor.git
+cd hosts_editor
 
 # Instale dependências
 flutter pub get
