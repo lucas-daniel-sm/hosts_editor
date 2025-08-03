@@ -7,7 +7,7 @@ import 'package:hosts_editor/models/hosts_editor_config.dart';
 import 'address_utils.dart';
 import 'host_files_manager.dart';
 
-const String _hostsPath = r'D:\Windows\System32\drivers\etc\hosts';
+const String _hostsPath = r'C:\Windows\System32\drivers\etc\hosts';
 const String _msHostsHeader = """
 # Copyright (c) 1993-2009 Microsoft Corp.
 #
