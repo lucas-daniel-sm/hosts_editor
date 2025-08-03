@@ -1,62 +1,43 @@
-import 'dart:io';
-
 import 'package:flutter/cupertino.dart';
+import 'package:hosts_editor/utils/host_files_manager.dart';
+import 'package:hosts_editor/utils/host_files_manager_impl.dart';
 import 'package:mobx/mobx.dart';
 import 'package:toastification/toastification.dart';
 
 import '../models/host_entry.dart';
-import 'hosts_editor_screen.dart';
 
 part 'hosts_editor_controller.g.dart';
-
-const String hostsPath = r'C:\Windows\System32\drivers\etc\hosts';
 
 class HostsEditorController = HostsEditorControllerBase
     with _$HostsEditorController;
 
 abstract class HostsEditorControllerBase with Store {
+  final HostsFilesManager hostsFilesManager = HostsFilesManagerImpl();
   @observable
   List<HostEntry> _hosts = <HostEntry>[].asObservable();
   @observable
   Set<int> _selectedIndices = <int>{}.asObservable();
   @observable
-  bool _autoReload = false;
-  @observable
   bool _autoSave = false;
   @observable
   String _headerContent = '';
 
-  void loadHostsFile() async {
+  HostsEditorControllerBase() {
+    hostsFilesManager.registerOnLoadCallback(_onLoadFile);
+    hostsFilesManager.registerOnSaveCallback(_onSaveFile);
+    hostsFilesManager.registerPreSaveCallback(_preSaveFile);
+  }
+
+  void init() {
+    hostsFilesManager.load();
+  }
+
+  void _onLoadFile(List<String> hosts) {
     try {
-      final file = File(hostsPath);
-      final contents = await file.readAsString();
+      _hosts
+        ..clear()
+        ..addAll(hosts.map(_parseHostLine));
 
-      final lines = contents.split('\n');
-      final List<HostEntry> hosts = [];
-      final List<String> headerLines = [];
-      bool headerEnded = false;
-
-      for (final line in lines) {
-        final trimmed = line.trim();
-
-        // Collect header lines until we find the first host entry
-        if (!headerEnded && !_isHostLine(trimmed)) {
-          headerLines.add(line);
-          continue;
-        }
-
-        if (_isHostLine(trimmed)) {
-          headerEnded = true;
-          final hostEntry = _parseHostLine(trimmed);
-          if (hostEntry != null) {
-            hosts.add(hostEntry);
-          }
-        }
-      }
-
-      _hosts.clear();
-      _hosts.addAll(hosts);
-      _headerContent = headerLines.join('\n');
       _showToast(
         'Arquivo carregado com sucesso.',
         type: ToastificationType.success,
@@ -69,95 +50,34 @@ abstract class HostsEditorControllerBase with Store {
     }
   }
 
-  bool _isHostLine(final String line) {
-    final uncommented = line.startsWith('#') ? line.substring(1).trim() : line;
-    final parts = uncommented.split(RegExp(r'\s+'));
-    return parts.length >= 2 && _isValidIP(parts[0]);
+  Iterable<String> _preSaveFile() => _hosts.map(_hostToLine);
+
+  String _hostToLine(HostEntry host) {
+    final comment = host.comment.isNotEmpty ? ' # ${host.comment}' : '';
+    return '${host.disabled ? '# ' : ''}${host.ip} ${host.hostname}$comment';
   }
 
-  bool _isValidIP(String ip) {
-    final parts = ip.split('.');
-    if (parts.length != 4) return false;
-
-    try {
-      for (String part in parts) {
-        final num = int.parse(part);
-        if (num < 0 || num > 255) return false;
-      }
-      return true;
-    } catch (e) {
-      return false;
-    }
+  void _onSaveFile([_]) {
+    _showToast('Arquivo salvo com sucesso.', type: ToastificationType.success);
   }
 
-  HostEntry? _parseHostLine(String line) {
-    final isEnabled = !line.startsWith('#');
-    final cleanLine = line.startsWith('#') ? line.substring(1).trim() : line;
-
-    String comment = '';
-    String workingLine = cleanLine;
-
-    // Extract comment if exists
-    final commentIndex = cleanLine.indexOf('#');
-    if (commentIndex != -1) {
-      comment = cleanLine.substring(commentIndex + 1).trim();
-      workingLine = cleanLine.substring(0, commentIndex).trim();
-    }
-
-    final parts = workingLine.split(RegExp(r'\s+'));
-    if (parts.length >= 2 && _isValidIP(parts[0])) {
-      return HostEntry(
-        ip: parts[0],
-        hostname: parts[1],
-        comment: comment,
-        enabled: isEnabled,
-      );
-    }
-
-    return null;
+  HostEntry _parseHostLine(final String line) {
+    final isCommented = line.startsWith('#');
+    final uncommented = isCommented ? line.substring(1).trim() : line;
+    final parts = uncommented.split(RegExp(r'(\s|#)+'));
+    return HostEntry(
+      ip: parts[0],
+      hostname: parts[1],
+      comment: parts.length > 2 ? parts.sublist(2).join(' ') : '',
+      enabled: !isCommented,
+    );
   }
 
-  @action
-  Future<void> saveHostsFile() async {
-    try {
-      final StringBuilder content = StringBuilder();
-
-      // Add header content
-      if (_headerContent.isNotEmpty) {
-        content.writeln(_headerContent);
-        content.writeln('');
-      }
-
-      for (HostEntry host in _hosts) {
-        final line = host.toHostsLine();
-        content.writeln(line);
-      }
-
-      final file = File(hostsPath);
-      await file.writeAsString(content.toString());
-      _showToast(
-        'Arquivo salvo com sucesso.',
-        type: ToastificationType.success,
-      );
-    } catch (e) {
-      _showToast(
-        'Erro ao salvar o arquivo: $e',
-        type: ToastificationType.error,
-      );
-    }
-  }
-
-  @action
-  void autoSaveIfEnabled() {
-    if (_autoSave) {
-      saveHostsFile();
-    }
-  }
+  void saveHostsFile() => hostsFilesManager.save();
 
   @action
   void removeHost(int index) {
     _hosts.removeAt(index);
-    autoSaveIfEnabled();
   }
 
   @action
@@ -168,7 +88,6 @@ abstract class HostsEditorControllerBase with Store {
       _hosts.removeAt(index);
     }
     _selectedIndices.clear();
-    autoSaveIfEnabled();
   }
 
   @action
@@ -181,13 +100,13 @@ abstract class HostsEditorControllerBase with Store {
   }
 
   @action
-  void toggleAutoReload() {
-    _autoReload = !_autoReload;
-  }
-
-  @action
   void toggleAutoSave() {
     _autoSave = !_autoSave;
+    if (_autoSave) {
+      hostsFilesManager.enableAutoSave();
+    } else {
+      hostsFilesManager.disableAutoSave();
+    }
   }
 
   void _showToast(
@@ -203,9 +122,6 @@ abstract class HostsEditorControllerBase with Store {
 
   @computed
   bool get autoSave => _autoSave;
-
-  @computed
-  bool get autoReload => _autoReload;
 
   @computed
   List<HostEntry> get hosts => _hosts;

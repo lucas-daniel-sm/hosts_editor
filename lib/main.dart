@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'screens/hosts_editor_screen.dart';
 import 'package:toastification/toastification.dart';
+
+import 'screens/hosts_editor_screen.dart';
 
 void main() => runApp(const HostsEditorApp());
 

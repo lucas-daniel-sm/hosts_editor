@@ -25,4 +25,6 @@ class HostEntry {
       enabled: enabled,
     );
   }
+
+  bool get disabled => !enabled;
 }

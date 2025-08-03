@@ -27,7 +27,7 @@ class _HostsEditorScreenState extends State<HostsEditorScreen> {
   @override
   void initState() {
     super.initState();
-    controller.loadHostsFile();
+    controller.init();
   }
 
   @override
@@ -100,7 +100,6 @@ class _HostsEditorScreenState extends State<HostsEditorScreen> {
         itemBuilder: (_, index) {
           return HostListItem(
             hostEntry: controller.hosts[index],
-            callAutosave: controller.autoSaveIfEnabled,
             isSelected: controller.selectedIndices.contains(index),
             onEdit: () => editHost(index),
             onRemove: () => removeHost(() => controller.removeHost(index)),
@@ -132,20 +131,6 @@ class _HostsEditorScreenState extends State<HostsEditorScreen> {
                   ),
                 ),
               ),
-              Tooltip(
-                message: controller.autoReload
-                    ? 'Auto reload ativado'
-                    : 'Auto reload desativado',
-                child: IconButton(
-                  onPressed: controller.toggleAutoReload,
-                  icon: Icon(
-                    controller.autoReload
-                        ? Icons.refresh
-                        : Icons.refresh_outlined,
-                    color: controller.autoReload ? Colors.green : Colors.grey,
-                  ),
-                ),
-              ),
             ],
           ),
           ElevatedButton(
@@ -170,7 +155,6 @@ class _HostsEditorScreenState extends State<HostsEditorScreen> {
           ),
           onSave: (newHost) {
             controller.hosts.add(newHost);
-            controller.autoSaveIfEnabled();
             toastification.show(
               title: Text('Host adicionado: ${newHost.hostname}'),
               autoCloseDuration: const Duration(seconds: 3),
@@ -190,7 +174,6 @@ class _HostsEditorScreenState extends State<HostsEditorScreen> {
         onSave: (updatedHost) {
           setState(() {
             controller.hosts[index] = updatedHost;
-            controller.autoSaveIfEnabled();
             toastification.show(
               title: Text('Host atualizado: ${updatedHost.hostname}'),
               autoCloseDuration: const Duration(seconds: 3),

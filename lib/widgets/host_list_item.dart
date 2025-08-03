@@ -15,12 +15,11 @@ class HostListItem extends StatelessWidget {
   HostListItem({
     super.key,
     required HostEntry hostEntry,
-    required VoidCallback callAutosave,
     required this.isSelected,
     required this.onEdit,
     required this.onRemove,
     required this.onToggleSelection,
-  }) : _controller = HostListItemControler(hostEntry, callAutosave);
+  }) : _controller = HostListItemControler(hostEntry);
 
   @override
   Widget build(BuildContext context) {
